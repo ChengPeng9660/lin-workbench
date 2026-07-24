@@ -30,6 +30,8 @@ jobs:
           node-version: 22
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - name: Install
         run: pnpm install --no-frozen-lockfile
       - name: Build
