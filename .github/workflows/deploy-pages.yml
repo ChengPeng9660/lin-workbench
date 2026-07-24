@@ -33,7 +33,7 @@ jobs:
         with:
           enablement: true
       - name: Install
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --no-frozen-lockfile --ignore-scripts
       - name: Build
         env:
           BASE_PATH: /${{ github.event.repository.name }}
