@@ -16,6 +16,12 @@ type WorkspaceSnapshot = {
 
 const palette = ["#d97757", "#809b87", "#8293b2", "#b28c62", "#947da7"];
 const starterTasks: Task[] = [];
+const diaryPrompts = [
+  { label: "今日事件", description: "去何地、见何人、做何事", placeholder: "例：10点去图书馆写文案。" },
+  { label: "今日阅读", description: "书名、页码及核心观点", placeholder: "例：读《万历十五年》P32—45，制度惯性影响个人选择。" },
+  { label: "今日美食", description: "吃了什么，口味如何", placeholder: "例：午饭吃番茄牛腩，偏甜，牛肉很软。" },
+  { label: "今日新知", description: "冷知识或小技能", placeholder: "例：学会用曝光补偿压暗雪景高光。" },
+];
 
 function dateKey(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -48,9 +54,9 @@ function mergeById<T extends { id: string }>(cloud: T[], local: T[]): T[] {
 }
 
 const navItems: { id: View; label: string; mark: string }[] = [
-  { id: "plan", label: "æ¯æ—¥è®¡åˆ’", mark: "01" },
-  { id: "inspiration", label: "çµæ„Ÿ", mark: "02" },
-  { id: "review", label: "æ¯æ—¥å¤ç›˜", mark: "03" },
+  { id: "plan", label: "每日计划", mark: "01" },
+  { id: "inspiration", label: "灵感", mark: "02" },
+  { id: "review", label: "极简日记", mark: "03" },
 ];
 
 export default function Home() {
@@ -63,13 +69,13 @@ export default function Home() {
   const [diary, setDiary] = useState<Record<string, DiaryEntry[]>>({});
   const [selectedDate, setSelectedDate] = useState(key);
   const [taskName, setTaskName] = useState("");
-  const [taskDuration, setTaskDuration] = useState("30 åˆ†é’Ÿ");
+  const [taskDuration, setTaskDuration] = useState("30 分钟");
   const [ideaText, setIdeaText] = useState("");
   const [diaryText, setDiaryText] = useState("");
-  const [diaryCategory, setDiaryCategory] = useState("æ‰€é‡ä¹‹äº‹");
+  const [diaryCategory, setDiaryCategory] = useState("今日事件");
   const [ready, setReady] = useState(false);
   const [cloudReady, setCloudReady] = useState(false);
-  const [syncStatus, setSyncStatus] = useState("æ­£åœ¨è¿žæŽ¥");
+  const [syncStatus, setSyncStatus] = useState("正在连接");
   const [syncAccount, setSyncAccount] = useState("");
 
   useEffect(() => {
@@ -107,11 +113,11 @@ export default function Home() {
   }
 
   async function pullCloud(manual = false) {
-    if (manual) setSyncStatus("åŒæ­¥ä¸­");
+    if (manual) setSyncStatus("同步中");
     try {
       const response = await fetch("/api/sync", { cache: "no-store" });
       if (response.status === 401 || response.status === 403) {
-        setSyncStatus("ä»…æœ¬æœº");
+        setSyncStatus("仅本机");
         setCloudReady(true);
         return;
       }
@@ -144,10 +150,10 @@ export default function Home() {
         }
       }
       window.localStorage.setItem("lin-cloud-migrated", "1");
-      setSyncStatus("å·²åŒæ­¥");
+      setSyncStatus("已同步");
       setCloudReady(true);
     } catch {
-      setSyncStatus("ç¦»çº¿ä¿å­˜");
+      setSyncStatus("离线保存");
       setCloudReady(true);
     }
   }
@@ -160,9 +166,9 @@ export default function Home() {
   }, [ready]);
 
   useEffect(() => {
-    if (!ready || !cloudReady || syncStatus === "ä»…æœ¬æœº") return;
+    if (!ready || !cloudReady || syncStatus === "仅本机") return;
     const timer = window.setTimeout(async () => {
-      setSyncStatus("åŒæ­¥ä¸­");
+      setSyncStatus("同步中");
       const snapshot: WorkspaceSnapshot = {
         tasksByDate: readTaskArchive(key, tasks),
         ideas,
@@ -178,9 +184,9 @@ export default function Home() {
         if (!response.ok) throw new Error("sync failed");
         const result = await response.json() as { user?: string };
         if (result.user) setSyncAccount(result.user);
-        setSyncStatus("å·²åŒæ­¥");
+        setSyncStatus("已同步");
       } catch {
-        setSyncStatus("ç¦»çº¿ä¿å­˜");
+        setSyncStatus("离线保存");
       }
     }, 900);
     return () => window.clearTimeout(timer);
@@ -188,8 +194,8 @@ export default function Home() {
 
   const completed = tasks.filter((task) => task.done).length;
   const progress = tasks.length ? Math.round((completed / tasks.length) * 100) : 0;
-  const selectedReview = reviews[selectedDate] ?? { win: "", improve: "", tomorrow: "" };
   const selectedEntries = diary[selectedDate] ?? [];
+  const activeDiaryPrompt = diaryPrompts.find((prompt) => prompt.label === diaryCategory) ?? diaryPrompts[0];
   const recentDates = useMemo(() => Array.from({ length: 7 }, (_, index) => {
     const date = new Date(today);
     date.setDate(today.getDate() - index);
@@ -251,15 +257,15 @@ export default function Home() {
     <main className="shell">
       <aside className="sidebar">
         <div className="brand">
-          <span className="brand-seal">æž—</span>
+          <span className="brand-seal">林</span>
           <div>
-            <strong>æž—çš„å·¥ä½œå°</strong>
+            <strong>林的工作台</strong>
             <span>DAILY STUDIO</span>
           </div>
         </div>
 
-        <nav aria-label="å·¥ä½œå°å¯¼èˆª">
-          <p className="nav-caption">æˆ‘çš„ç©ºé—´</p>
+        <nav aria-label="工作台导航">
+          <p className="nav-caption">我的空间</p>
           {navItems.map((item) => (
             <button
               className={`nav-item ${view === item.id ? "active" : ""}`}
@@ -274,12 +280,12 @@ export default function Home() {
         </nav>
 
         <div className="sidebar-note">
-          <span>ä»Šæ—¥å¯„è¯­</span>
-          <p>å¾®å°çš„æ—¥å¸¸ï¼Œç´¯ç§¯æˆæƒ³è¦çš„ç”Ÿæ´»ã€‚</p>
+          <span>今日寄语</span>
+          <p>微小的日常，累积成想要的生活。</p>
         </div>
         <div className="profile">
           <span className="avatar">L</span>
-          <div><strong>Lin</strong><small>ä¿æŒå¥½å¥‡ï¼ŒæŒç»­è¡ŒåŠ¨</small></div>
+          <div><strong>Lin</strong><small>保持好奇，持续行动</small></div>
           <i className="status-dot" />
         </div>
       </aside>
@@ -287,16 +293,16 @@ export default function Home() {
       <section className="workspace">
         <header className="topbar">
           <div>
-            <span className="eyebrow">TODAY Â· {key.replaceAll("-", ".")}</span>
-            <h1>{view === "plan" ? "æŠŠä»Šå¤©ï¼Œè¿‡å¾—å…·ä½“ä¸€ç‚¹ã€‚" : view === "inspiration" ? "æ•æ‰ä¸€é—ªè€Œè¿‡çš„å¿µå¤´ã€‚" : "ç»™ä»Šå¤©ä¸€ä¸ªæ¸©æŸ”çš„å¥å·ã€‚"}</h1>
+            <span className="eyebrow">TODAY · {key.replaceAll("-", ".")}</span>
+            <h1>{view === "plan" ? "把今天，过得具体一点。" : view === "inspiration" ? "捕捉一闪而过的念头。" : "把今天发生的事，简短记下来。"}</h1>
           </div>
           <div className="top-actions">
-            <button className={`sync-pill ${syncStatus === "å·²åŒæ­¥" ? "synced" : ""}`} onClick={() => void pullCloud(true)} title={syncAccount || "äº‘ç«¯åŒæ­¥"}>
+            <button className={`sync-pill ${syncStatus === "已同步" ? "synced" : ""}`} onClick={() => void pullCloud(true)} title={syncAccount || "云端同步"}>
               <i /><span>{syncStatus}</span>
             </button>
             <div className="date-card">
               <span className="date-number">{today.getDate()}</span>
-              <div><strong>{dateText.split("æ—¥")[0]}æ—¥</strong><small>{dateText.split("æ—¥")[1]}</small></div>
+              <div><strong>{dateText.split("日")[0]}日</strong><small>{dateText.split("日")[1]}</small></div>
             </div>
           </div>
         </header>
@@ -307,9 +313,9 @@ export default function Home() {
               <div className="section-heading">
                 <div>
                   <span className="eyebrow">DAILY RHYTHM</span>
-                  <h2>ä»Šæ—¥è®¡åˆ’</h2>
+                  <h2>今日计划</h2>
                 </div>
-                <span className="task-count">{completed} / {tasks.length} å·²å®Œæˆ</span>
+                <span className="task-count">{completed} / {tasks.length} 已完成</span>
               </div>
 
               <div className="task-list">
@@ -319,29 +325,29 @@ export default function Home() {
                       className="check"
                       style={{ "--task-color": task.color } as React.CSSProperties}
                       onClick={() => setTasks((current) => current.map((item) => item.id === task.id ? { ...item, done: !item.done } : item))}
-                      aria-label={`${task.done ? "å–æ¶ˆå®Œæˆ" : "å®Œæˆ"}${task.title}`}
+                      aria-label={`${task.done ? "取消完成" : "完成"}${task.title}`}
                     >
-                      {task.done && "âœ“"}
+                      {task.done && "✓"}
                     </button>
                     <span className="task-index">{String(index + 1).padStart(2, "0")}</span>
                     <div className="task-info">
                       <strong>{task.title}</strong>
-                      <small>ä¸ºè‡ªå·±ä¸“æ³¨æŠ•å…¥</small>
+                      <small>为自己专注投入</small>
                     </div>
                     <span className="duration">{task.duration}</span>
-                    <button className="delete" onClick={() => setTasks((current) => current.filter((item) => item.id !== task.id))} aria-label={`åˆ é™¤${task.title}`}>Ã—</button>
+                    <button className="delete" onClick={() => setTasks((current) => current.filter((item) => item.id !== task.id))} aria-label={`删除${task.title}`}>×</button>
                   </article>
                 ))}
-                {tasks.length === 0 && <div className="empty-state">ä»Šå¤©è¿˜æ²¡æœ‰ä»»åŠ¡ï¼Œå†™ä¸‹ç¬¬ä¸€ä»¶æƒ³å®Œæˆçš„äº‹å§ã€‚</div>}
+                {tasks.length === 0 && <div className="empty-state">今天还没有任务，写下第一件想完成的事吧。</div>}
               </div>
 
               <form className="add-task" onSubmit={addTask}>
-                <span className="add-mark">ï¼‹</span>
-                <input value={taskName} onChange={(event) => setTaskName(event.target.value)} placeholder="æ–°å¢žä¸€é¡¹ä»Šæ—¥ä»»åŠ¡â€¦" aria-label="ä»»åŠ¡åç§°" />
-                <select value={taskDuration} onChange={(event) => setTaskDuration(event.target.value)} aria-label="é¢„è®¡æ—¶é•¿">
-                  <option>15 åˆ†é’Ÿ</option><option>30 åˆ†é’Ÿ</option><option>45 åˆ†é’Ÿ</option><option>1 å°æ—¶</option><option>2 å°æ—¶</option>
+                <span className="add-mark">＋</span>
+                <input value={taskName} onChange={(event) => setTaskName(event.target.value)} placeholder="新增一项今日任务…" aria-label="任务名称" />
+                <select value={taskDuration} onChange={(event) => setTaskDuration(event.target.value)} aria-label="预计时长">
+                  <option>15 分钟</option><option>30 分钟</option><option>45 分钟</option><option>1 小时</option><option>2 小时</option>
                 </select>
-                <button type="submit">æ·»åŠ </button>
+                <button type="submit">添加</button>
               </form>
             </section>
 
@@ -349,15 +355,15 @@ export default function Home() {
               <section className="progress-card">
                 <span className="eyebrow">TODAY&apos;S FLOW</span>
                 <div className="progress-ring" style={{ "--progress": `${progress * 3.6}deg` } as React.CSSProperties}>
-                  <div><strong>{progress}%</strong><span>ä»Šæ—¥è¿›åº¦</span></div>
+                  <div><strong>{progress}%</strong><span>今日进度</span></div>
                 </div>
-                <p>{progress === 100 ? "æ¼‚äº®ï¼ä»Šå¤©çš„è®¡åˆ’å…¨éƒ¨å®Œæˆã€‚" : progress >= 50 ? "èŠ‚å¥å¾ˆå¥½ï¼Œç»§ç»­ä¿æŒã€‚" : "ä¸å¿…ç€æ€¥ï¼Œä»Žä¸€ä»¶å°äº‹å¼€å§‹ã€‚"}</p>
+                <p>{progress === 100 ? "漂亮！今天的计划全部完成。" : progress >= 50 ? "节奏很好，继续保持。" : "不必着急，从一件小事开始。"}</p>
                 <div className="progress-track"><i style={{ width: `${progress}%` }} /></div>
               </section>
               <section className="quote-card">
-                <span className="quote-mark">â€œ</span>
-                <blockquote>è‡ªå¾‹ä¸æ˜¯æŸç¼šï¼Œ<br />è€Œæ˜¯ç»™è‡ªç”±é“ºè·¯ã€‚</blockquote>
-                <span className="quote-credit">â€” ä»Šæ—¥æé†’</span>
+                <span className="quote-mark">“</span>
+                <blockquote>自律不是束缚，<br />而是给自由铺路。</blockquote>
+                <span className="quote-credit">— 今日提醒</span>
               </section>
             </aside>
           </div>
@@ -366,22 +372,22 @@ export default function Home() {
         {view === "inspiration" && (
           <section className="main-card view-card">
             <div className="section-heading">
-              <div><span className="eyebrow">IDEA GARDEN</span><h2>çµæ„ŸèŠ±å›­</h2></div>
-              <span className="task-count">{ideas.length} æ¡çµæ„Ÿ</span>
+              <div><span className="eyebrow">IDEA GARDEN</span><h2>灵感花园</h2></div>
+              <span className="task-count">{ideas.length} 条灵感</span>
             </div>
             <form className="idea-form" onSubmit={addIdea}>
-              <textarea value={ideaText} onChange={(event) => setIdeaText(event.target.value)} placeholder="è®°ä¸‹æ­¤åˆ»çš„æƒ³æ³•ã€ç”»é¢æˆ–ä¸€å¥è¯â€¦" aria-label="æ–°çµæ„Ÿ" />
-              <button type="submit">æ”¶è—çµæ„Ÿ</button>
+              <textarea value={ideaText} onChange={(event) => setIdeaText(event.target.value)} placeholder="记下此刻的想法、画面或一句话…" aria-label="新灵感" />
+              <button type="submit">收藏灵感</button>
             </form>
             <div className="idea-grid">
               {ideas.map((idea, index) => (
                 <article className="idea-note" key={idea.id}>
                   <span>{String(index + 1).padStart(2, "0")}</span>
                   <p>{idea.text}</p>
-                  <footer><small>{idea.createdAt}</small><button onClick={() => setIdeas((current) => current.filter((item) => item.id !== idea.id))} aria-label="åˆ é™¤çµæ„Ÿ">åˆ é™¤</button></footer>
+                  <footer><small>{idea.createdAt}</small><button onClick={() => setIdeas((current) => current.filter((item) => item.id !== idea.id))} aria-label="删除灵感">删除</button></footer>
                 </article>
               ))}
-              {!ideas.length && <div className="empty-state wide">çµæ„Ÿä¸å¿…å®Œæ•´ã€‚å…ˆæŠŠå®ƒç•™ä¸‹ï¼Œå®ƒä¼šæ…¢æ…¢é•¿å‡ºå½¢çŠ¶ã€‚</div>}
+              {!ideas.length && <div className="empty-state wide">灵感不必完整。先把它留下，它会慢慢长出形状。</div>}
             </div>
           </section>
         )}
@@ -389,8 +395,8 @@ export default function Home() {
         {view === "review" && (
           <section className="main-card view-card">
             <div className="section-heading">
-              <div><span className="eyebrow">DAILY ARCHIVE</span><h2>æ¯æ—¥è®°å½•</h2></div>
-              <span className="autosave">å·²ä¸ºä½ è‡ªåŠ¨ä¿å­˜</span>
+              <div><span className="eyebrow">FACTS, NOT FEELINGS</span><h2>马伯庸极简日记</h2></div>
+              <span className="autosave">已为你自动保存</span>
             </div>
 
             <div className="diary-datebar">
@@ -403,60 +409,47 @@ export default function Home() {
                 ))}
               </div>
               <label className="date-picker">
-                <span>æŸ¥çœ‹å¾€æ—¥</span>
+                <span>查看往日</span>
                 <input type="date" value={selectedDate} max={key} onChange={(event) => setSelectedDate(event.target.value)} />
               </label>
             </div>
 
+            <div className="minimal-method" aria-label="日记分类">
+              {diaryPrompts.map((prompt) => (
+                <button
+                  type="button"
+                  className={diaryCategory === prompt.label ? "method-card active" : "method-card"}
+                  aria-pressed={diaryCategory === prompt.label}
+                  key={prompt.label}
+                  onClick={() => setDiaryCategory(prompt.label)}
+                >
+                  <strong>{prompt.label}</strong>
+                  <span>{prompt.description}</span>
+                </button>
+              ))}
+            </div>
+            <p className="method-note">一事一条，越短越好。断了就补，不强迫。</p>
+
             <div className="diary-ledger">
               <div className="ledger-heading">
-                <div><span>{selectedDate.replaceAll("-", " / ")}</span><strong>ç»†å¤§å¿…ä¹¦ï¼Œç§¯çŽ‰ç¢Žé‡‘</strong></div>
-                <small>{selectedEntries.length} åˆ™è®°å½•</small>
+                <div><span>{selectedDate.replaceAll("-", " / ")}</span><strong>只记事实，不抒情</strong></div>
+                <small>{selectedEntries.length} 则记录</small>
               </div>
               <form className="diary-form" onSubmit={addDiaryEntry}>
-                <select value={diaryCategory} onChange={(event) => setDiaryCategory(event.target.value)} aria-label="è®°å½•ç±»åˆ«">
-                  <option>æ‰€é‡ä¹‹äº‹</option><option>æ‰€è§ä¹‹äºº</option><option>æ‰€è¯»ä¹‹ä¹¦</option><option>ä¸€é—ªä¹‹å¿µ</option><option>ä»Šæ—¥é¥®é£Ÿ</option>
-                </select>
-                <textarea value={diaryText} onChange={(event) => setDiaryText(event.target.value)} placeholder="ä¸€äº‹ä¸€æ¡ï¼Œåªè®°äº‹å®žï¼Œä¸å¿…è¿½æ±‚æ–‡é‡‡â€¦" aria-label="ä»Šæ—¥è®°å½•" />
-                <button type="submit">è®°ä¸‹ä¸€åˆ™</button>
+                <div className="entry-kind"><span>正在记录</span><strong>{diaryCategory}</strong></div>
+                <textarea value={diaryText} onChange={(event) => setDiaryText(event.target.value)} placeholder={activeDiaryPrompt.placeholder} aria-label="今日记录" />
+                <button type="submit">记下一则</button>
               </form>
               <div className="ledger-list">
                 {selectedEntries.map((entry, index) => (
                   <article className="ledger-entry" key={entry.id}>
                     <span>{String(index + 1).padStart(2, "0")}</span>
-                    <div><small>{entry.category} Â· {entry.createdAt}</small><p>{entry.text}</p></div>
-                    <button onClick={() => setDiary((current) => ({ ...current, [selectedDate]: current[selectedDate].filter((item) => item.id !== entry.id) }))} aria-label="åˆ é™¤è¿™åˆ™è®°å½•">Ã—</button>
+                    <div><small>{entry.category} · {entry.createdAt}</small><p>{entry.text}</p></div>
+                    <button onClick={() => setDiary((current) => ({ ...current, [selectedDate]: current[selectedDate].filter((item) => item.id !== entry.id) }))} aria-label="删除这则记录">×</button>
                   </article>
                 ))}
-                {!selectedEntries.length && <p className="ledger-empty">ä»Šå¤©è¿˜æ²¡æœ‰è®°å½•ã€‚æ—©é¤åƒäº†ä»€ä¹ˆã€è¯»äº†å“ªä¸€é¡µä¹¦ã€è·¯ä¸Šé‡è§äº†è°ï¼Œéƒ½å€¼å¾—å†™ä¸‹ä¸€ç¬”ã€‚</p>}
+                {!selectedEntries.length && <p className="ledger-empty">今天还没有记录。先写一件实际发生的小事，不必完整，也不必补写感想。</p>}
               </div>
-            </div>
-
-            <div className="reflection-title">
-              <span className="eyebrow">THREE QUESTIONS</span><h3>ç”¨ä¸‰é—®ï¼Œä¸ºè¿™ä¸€å¤©æ”¶å°¾</h3>
-            </div>
-            <div className="review-grid">
-              {[
-                ["win", "01", "ä»Šå¤©åšå¾—æœ€å¥½çš„ä¸€ä»¶äº‹", "å“ªä¸€åˆ»è®©ä½ æ„Ÿåˆ°æ»¡æ„ï¼Ÿ"],
-                ["improve", "02", "å¯ä»¥å†è¿›æ­¥ä¸€ç‚¹çš„åœ°æ–¹", "è¯šå®žè®°å½•ï¼Œä¸å¿…è‹›è´£è‡ªå·±ã€‚"],
-                ["tomorrow", "03", "æ˜Žå¤©æœ€é‡è¦çš„ä¸€ä»¶äº‹", "æŠŠæ³¨æ„åŠ›ç•™ç»™çœŸæ­£é‡è¦çš„äº‹ã€‚"],
-              ].map(([field, number, title, placeholder]) => (
-                <label className="review-item" key={field}>
-                  <span>{number}</span>
-                  <strong>{title}</strong>
-                  <textarea
-                    value={selectedReview[field as keyof Review]}
-                    onChange={(event) => setReviews((current) => ({
-                      ...current,
-                      [selectedDate]: { ...(current[selectedDate] ?? { win: "", improve: "", tomorrow: "" }), [field]: event.target.value },
-                    }))}
-                    placeholder={placeholder}
-                  />
-                </label>
-              ))}
-            </div>
-            <div className="review-footer">
-              <span>æœ¬æ—¥å­˜æ¡£</span><strong>{selectedEntries.length}</strong><p>æŠŠæµé€å˜æˆå­˜æ¡£ï¼ŒæŠŠæ¨¡ç³Šå˜æˆç¡®å‡¿ã€‚</p>
             </div>
           </section>
         )}
