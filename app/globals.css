@@ -153,7 +153,7 @@ h2 { margin: 7px 0 0; font: 400 24px/1.2 Georgia, "Songti SC", serif; }
 
 .view-card { min-height: 570px; }
 .idea-form { display: grid; grid-template-columns: 1fr auto; gap: 14px; padding: 24px 0; }
-.idea-form textarea, .review-item textarea {
+.idea-form textarea {
   resize: vertical; border: 1px solid var(--line); border-radius: 12px; outline: 0; padding: 15px;
   color: var(--ink); background: rgba(250,249,245,.7); line-height: 1.7;
 }
@@ -163,7 +163,6 @@ h2 { margin: 7px 0 0; font: 400 24px/1.2 Georgia, "Songti SC", serif; }
 .idea-note > span { color: #b6aa92; font: 9px/1 Arial; }.idea-note p { font: 14px/1.75 Georgia, "Songti SC", serif; }
 .idea-note footer { display: flex; justify-content: space-between; margin-top: auto; color: var(--muted); }
 .idea-note footer button { border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 10px; }
-.review-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 26px 0; }
 .diary-datebar { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 22px 0; border-bottom: 1px solid var(--line); }
 .date-strip { display: flex; gap: 7px; }
 .date-strip button {
@@ -175,13 +174,22 @@ h2 { margin: 7px 0 0; font: 400 24px/1.2 Georgia, "Songti SC", serif; }
 .date-strip button i { position: absolute; right: 6px; top: 6px; width: 5px; height: 5px; border-radius: 50%; background: var(--terracotta); }
 .date-picker { display: grid; gap: 7px; color: var(--muted); font-size: 9px; }
 .date-picker input { border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; color: var(--ink); background: #faf9f5; font-size: 11px; }
+.minimal-method { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding-top: 22px; }
+.method-card { min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: 13px; color: var(--ink); background: rgba(250,249,245,.68); text-align: left; cursor: pointer; transition: border-color .2s, background .2s, transform .2s; }
+.method-card:hover { transform: translateY(-2px); border-color: #c9b8a4; }
+.method-card strong { display: block; margin-bottom: 7px; font: 15px/1.3 Georgia, "Songti SC", serif; }
+.method-card span { display: block; color: var(--muted); font-size: 10px; line-height: 1.55; }
+.method-card.active { border-color: var(--terracotta); background: #f8eee8; box-shadow: 0 8px 22px rgba(143,83,58,.08); }
+.method-card.active strong { color: var(--terracotta); }
+.method-note { margin: 12px 2px 0; color: var(--muted); font: 11px/1.6 Georgia, "Songti SC", serif; }
 .diary-ledger { margin-top: 24px; overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: #f8f4ea; }
 .ledger-heading { display: flex; justify-content: space-between; align-items: center; padding: 19px 22px; color: white; background: var(--green); }
 .ledger-heading div { display: flex; align-items: center; gap: 18px; }.ledger-heading span { color: #d9bda8; font: 10px/1 Arial; letter-spacing: .12em; }
 .ledger-heading strong { font: 15px/1.4 Georgia, "Songti SC", serif; }.ledger-heading small { color: rgba(255,255,255,.55); font-size: 9px; }
 .diary-form { display: grid; grid-template-columns: 110px 1fr auto; gap: 11px; align-items: stretch; padding: 18px 20px; border-bottom: 1px solid var(--line); }
-.diary-form select, .diary-form textarea { border: 1px solid var(--line); border-radius: 10px; outline: none; color: var(--ink); background: rgba(255,255,255,.72); font-size: 11px; }
-.diary-form select { padding: 0 10px; }.diary-form textarea { min-height: 66px; resize: vertical; padding: 12px 14px; line-height: 1.7; }
+.entry-kind { display: grid; align-content: center; gap: 6px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.72); }
+.entry-kind span { color: var(--muted); font-size: 8px; letter-spacing: .08em; }.entry-kind strong { color: var(--terracotta); font: 12px/1.2 Georgia, "Songti SC", serif; }
+.diary-form textarea { min-height: 66px; resize: vertical; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; outline: none; color: var(--ink); background: rgba(255,255,255,.72); font-size: 11px; line-height: 1.7; }
 .diary-form button { border: 0; border-radius: 10px; padding: 0 17px; color: white; background: var(--terracotta); cursor: pointer; font-size: 11px; }
 .ledger-list { padding: 3px 20px 7px; }
 .ledger-entry { display: grid; grid-template-columns: 28px 1fr 24px; gap: 12px; padding: 17px 0; border-bottom: 1px solid var(--line); }
@@ -189,12 +197,6 @@ h2 { margin: 7px 0 0; font: 400 24px/1.2 Georgia, "Songti SC", serif; }
 .ledger-entry small { color: var(--terracotta); font-size: 9px; letter-spacing: .06em; }.ledger-entry p { margin: 7px 0 0; font: 13px/1.8 Georgia, "Songti SC", serif; white-space: pre-wrap; }
 .ledger-entry button { align-self: start; border: 0; background: transparent; color: #b9b4a8; cursor: pointer; font-size: 18px; }
 .ledger-empty { margin: 0; padding: 28px; color: var(--muted); text-align: center; font: 12px/1.8 Georgia, "Songti SC", serif; }
-.reflection-title { padding-top: 28px; }.reflection-title h3 { margin: 7px 0 0; font: 400 20px/1.4 Georgia, "Songti SC", serif; }
-.review-item { min-width: 0; display: flex; flex-direction: column; gap: 12px; padding: 22px; border: 1px solid var(--line); border-radius: 15px; background: rgba(248,246,239,.66); }
-.review-item > span { color: var(--terracotta); font: 11px/1 Arial; }.review-item > strong { min-height: 42px; font: 16px/1.5 Georgia, "Songti SC", serif; }
-.review-item textarea { min-height: 160px; border: 0; padding: 0; background: transparent; font-size: 12px; }
-.review-footer { display: grid; grid-template-columns: auto auto 1fr; align-items: center; gap: 12px; padding: 22px 24px; border-radius: 14px; color: white; background: var(--green); }
-.review-footer span { color: rgba(255,255,255,.6); font-size: 11px; }.review-footer strong { color: #e7b199; font: 28px/1 Georgia, serif; }.review-footer p { margin: 0; text-align: right; font: 12px/1.5 Georgia, "Songti SC", serif; }
 .empty-state { display: grid; place-items: center; min-height: 260px; color: var(--muted); font: 13px/1.8 Georgia, "Songti SC", serif; text-align: center; }
 .empty-state.wide { grid-column: 1 / -1; min-height: 230px; }
 
@@ -203,7 +205,7 @@ h2 { margin: 7px 0 0; font: 400 24px/1.2 Georgia, "Songti SC", serif; }
   .sidebar { min-height: calc(100vh - 24px); padding-inline: 18px; }
   .plan-layout { grid-template-columns: 1fr; }.insight-column { grid-template-columns: 1fr 1fr; }
   .progress-ring { width: 116px; height: 116px; margin-block: 18px; }
-  .idea-grid, .review-grid { grid-template-columns: 1fr 1fr; }.review-item:last-child { grid-column: 1 / -1; }
+  .idea-grid { grid-template-columns: 1fr 1fr; }.minimal-method { grid-template-columns: 1fr 1fr; }
   .date-strip button:nth-child(n+6) { display: none; }
 }
 
@@ -218,11 +220,10 @@ h2 { margin: 7px 0 0; font: 400 24px/1.2 Georgia, "Songti SC", serif; }
   .task-row { grid-template-columns: 30px 1fr auto 22px; gap: 8px; }.task-index { display: none; }.task-info small { display: none; }
   .delete { opacity: 1; }.add-task { grid-template-columns: 24px 1fr auto; }.add-task select { display: none; }
   .insight-column { grid-template-columns: 1fr; }.quote-card { display: none; }
-  .idea-form { grid-template-columns: 1fr; }.idea-grid, .review-grid { grid-template-columns: 1fr; }
+  .idea-form { grid-template-columns: 1fr; }.idea-grid { grid-template-columns: 1fr; }
   .diary-datebar { align-items: flex-end; }.date-strip { overflow-x: auto; }.date-strip button { flex: 0 0 46px; }.date-strip button:nth-child(n) { display: grid; }
-  .date-picker span { display: none; }.diary-form { grid-template-columns: 1fr; }.diary-form select { padding: 10px; }.diary-form button { padding: 12px; }
+  .date-picker span { display: none; }.diary-form { grid-template-columns: 1fr; }.diary-form button { padding: 12px; }
   .ledger-heading div { align-items: flex-start; flex-direction: column; gap: 7px; }
-  .review-item:last-child { grid-column: auto; }.review-footer { grid-template-columns: auto 1fr; }.review-footer p { grid-column: 1 / -1; text-align: left; }
 }
 
 @media (prefers-reduced-motion: reduce) {
